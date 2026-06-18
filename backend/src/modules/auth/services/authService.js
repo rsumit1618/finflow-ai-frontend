@@ -5,6 +5,7 @@ import { env } from "../../../config/env.js";
 import {
   createUser,
   findUserByEmail,
+  findUserById,
 } from "../../../repositories/userRepository.js";
 
 export const registerUserService = async (userData) => {
@@ -79,5 +80,20 @@ export const loginUserService = async (loginData) => {
       createdAt: user.createdAt,
     },
     token,
+  };
+};
+
+export const getProfileService = async (userId) => {
+  const user = await findUserById(userId);
+
+  if (!user) {
+    throw new Error("User not found");
+  }
+
+  return {
+    id: user.id,
+    name: user.name,
+    email: user.email,
+    createdAt: user.createdAt,
   };
 };

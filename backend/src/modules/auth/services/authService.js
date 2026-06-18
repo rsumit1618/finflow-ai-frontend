@@ -7,8 +7,8 @@ import {
   findUserByEmail,
   findUserById,
   updateUserById,
+  updateUserPassword,
 } from "../../../repositories/userRepository.js";
-
 
 export const registerUserService = async (userData) => {
   const existingUser = await findUserByEmail(userData.email);
@@ -111,4 +111,27 @@ export const updateProfileService = async (userId, data) => {
     email: user.email,
     updatedAt: user.updatedAt,
   };
+};
+
+export const changePasswordService = async (userId, data) => {
+  const user = await findUserById(userId);
+
+  if (!user) {
+    throw new Error("User not found");
+  }
+
+  const isOldPasswordValid = await bcrypt.compare(
+    data.oldPassword,
+    user.passwordHash
+  );
+
+  if (!isOldPasswordValid) {
+    throw new Error("Old password is incorrect");
+  }
+
+  const newPasswordHash = await bcrypt.hash(data.newPassword, 10);
+
+  await updateUserPassword(userId, newPasswordHash);
+
+  return true;
 };

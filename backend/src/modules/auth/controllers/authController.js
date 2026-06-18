@@ -3,11 +3,14 @@ import jwt from "jsonwebtoken";
 import { successResponse } from "../../../utils/apiResponse.js";
 import { env } from "../../../config/env.js";
 import {
+  changePasswordSchema,
   loginSchema,
   registerSchema,
   updateProfileSchema,
 } from "../validators/authValidator.js";
+
 import {
+  changePasswordService,
   getProfileService,
   loginUserService,
   registerUserService,
@@ -59,6 +62,26 @@ export const updateProfile = async (req, res, next) => {
     return successResponse(res, "Profile updated successfully", {
       user,
     });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const changePassword = async (req, res, next) => {
+  try {
+    const validatedData = changePasswordSchema.parse(req.body);
+
+    await changePasswordService(req.user.userId, validatedData);
+
+    return successResponse(res, "Password changed successfully");
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const logoutUser = async (req, res, next) => {
+  try {
+    return successResponse(res, "Logout successful");
   } catch (error) {
     next(error);
   }

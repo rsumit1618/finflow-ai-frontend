@@ -2,11 +2,16 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { successResponse } from "../../../utils/apiResponse.js";
 import { env } from "../../../config/env.js";
-import { registerSchema, loginSchema } from "../validators/authValidator.js";
+import {
+  loginSchema,
+  registerSchema,
+  updateProfileSchema,
+} from "../validators/authValidator.js";
 import {
   getProfileService,
   loginUserService,
   registerUserService,
+  updateProfileService,
 } from "../services/authService.js";
 
 export const registerUser = async (req, res, next) => {
@@ -38,6 +43,20 @@ export const getProfile = async (req, res, next) => {
     const user = await getProfileService(req.user.userId);
 
     return successResponse(res, "Profile fetched successfully", {
+      user,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const updateProfile = async (req, res, next) => {
+  try {
+    const validatedData = updateProfileSchema.parse(req.body);
+
+    const user = await updateProfileService(req.user.userId, validatedData);
+
+    return successResponse(res, "Profile updated successfully", {
       user,
     });
   } catch (error) {

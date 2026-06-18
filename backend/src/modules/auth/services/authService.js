@@ -6,7 +6,9 @@ import {
   createUser,
   findUserByEmail,
   findUserById,
+  updateUserById,
 } from "../../../repositories/userRepository.js";
+
 
 export const registerUserService = async (userData) => {
   const existingUser = await findUserByEmail(userData.email);
@@ -95,5 +97,18 @@ export const getProfileService = async (userId) => {
     name: user.name,
     email: user.email,
     createdAt: user.createdAt,
+  };
+};
+
+export const updateProfileService = async (userId, data) => {
+  const user = await updateUserById(userId, {
+    name: data.name,
+  });
+
+  return {
+    id: user.id,
+    name: user.name,
+    email: user.email,
+    updatedAt: user.updatedAt,
   };
 };

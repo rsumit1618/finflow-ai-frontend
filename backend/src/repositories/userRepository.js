@@ -21,3 +21,12 @@ export const findUserById = async (id) => {
     },
   });
 };
+
+export const updateUserById = async (id, data) => {
+  return await prisma.user.update({
+    where: {
+      id,
+    },
+    data,
+  });
+};

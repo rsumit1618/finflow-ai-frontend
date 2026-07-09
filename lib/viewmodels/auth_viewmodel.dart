@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../core/services/api_service.dart';
 import '../core/storage/secure_storage.dart';
-import '../models/auth_model.dart';
 
 class AuthViewModel extends ChangeNotifier {
   final ApiService _api = ApiService();
@@ -11,16 +10,21 @@ class AuthViewModel extends ChangeNotifier {
   String _userName = '';
   String _userEmail = '';
   String? _errorMessage;
+  bool _showLogoutPopup = false;
 
   bool get isLoading => _isLoading;
   bool get isLoggedIn => _isLoggedIn;
   String get userName => _userName;
   String get userEmail => _userEmail;
   String? get errorMessage => _errorMessage;
+  bool get showLogoutPopup => _showLogoutPopup;
 
   Future<void> checkLoginStatus() async {
     final token = await SecureStorage.getAccessToken();
     _isLoggedIn = token != null && token.isNotEmpty;
+    if (_isLoggedIn) {
+      await getProfile();
+    }
     notifyListeners();
   }
 
@@ -31,7 +35,6 @@ class AuthViewModel extends ChangeNotifier {
     final response = await _api.register(name, email, password);
 
     if (response.success) {
-      // Auto login after registration
       final loginSuccess = await login(email, password);
       _setLoading(false);
       return loginSuccess;
@@ -52,6 +55,7 @@ class AuthViewModel extends ChangeNotifier {
       _userName = response.user!.name;
       _userEmail = response.user!.email;
       _isLoggedIn = true;
+      _showLogoutPopup = false;
       _setLoading(false);
       return true;
     } else {
@@ -61,11 +65,32 @@ class AuthViewModel extends ChangeNotifier {
     }
   }
 
+  Future<void> getProfile() async {
+    final result = await _api.getProfile();
+    if (result['success']) {
+      final user = result['data']['data']['user'];
+      _userName = user['name'] ?? '';
+      _userEmail = user['email'] ?? '';
+      _isLoggedIn = true;
+      _showLogoutPopup = false;
+      notifyListeners();
+    } else {
+      _showLogoutPopup = true;
+      notifyListeners();
+    }
+  }
+
   Future<void> logout() async {
     await _api.logout();
     _isLoggedIn = false;
     _userName = '';
     _userEmail = '';
+    _showLogoutPopup = false;
+    notifyListeners();
+  }
+
+  void clearLogoutPopup() {
+    _showLogoutPopup = false;
     notifyListeners();
   }
 

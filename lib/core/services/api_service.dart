@@ -7,6 +7,7 @@ import '../storage/secure_storage.dart';
 class ApiService {
   final Dio _dio = Dio();
   bool _isRefreshing = false;
+  final List<QueuedRequest> _pendingRequests = [];
 
   ApiService() {
     _dio.options.baseUrl = AppConstants.baseUrl;
@@ -36,6 +37,13 @@ class ApiService {
       onError: (error, handler) async {
         if (error.response?.statusCode == 401 && !_isRefreshing) {
           _isRefreshing = true;
+
+          _pendingRequests.add(QueuedRequest(
+            requestOptions: error.requestOptions,
+            resolve: handler.resolve,
+            reject: handler.next,
+          ));
+
           try {
             final refreshToken = await SecureStorage.getRefreshToken();
             if (refreshToken != null) {
@@ -46,16 +54,21 @@ class ApiService {
               if (response.statusCode == 200) {
                 final newToken = response.data['data']['accessToken'];
                 await SecureStorage.saveAccessToken(newToken);
-                error.requestOptions.headers['Authorization'] =
-                'Bearer $newToken';
-                final retryResponse = await _dio.fetch(error.requestOptions);
+
                 _isRefreshing = false;
-                return handler.resolve(retryResponse);
+                _processPendingRequests(newToken);
+                return;
               }
             }
+            await SecureStorage.clearTokens();
+            _isRefreshing = false;
+            _rejectAllPending('Session expired. Please login again.');
+            return handler.next(error);
           } catch (e) {
             await SecureStorage.clearTokens();
             _isRefreshing = false;
+            _rejectAllPending('Session expired. Please login again.');
+            return handler.next(error);
           }
         }
         _isRefreshing = false;
@@ -69,6 +82,28 @@ class ApiService {
         return handler.next(response);
       },
     ));
+  }
+
+  void _processPendingRequests(String newToken) {
+    for (final request in _pendingRequests) {
+      request.requestOptions.headers['Authorization'] = 'Bearer $newToken';
+      _dio.fetch(request.requestOptions).then(
+            (response) => request.resolve(response),
+        onError: (error) => request.reject(error as DioException),
+      );
+    }
+    _pendingRequests.clear();
+  }
+
+  void _rejectAllPending(String message) {
+    for (final request in _pendingRequests) {
+      request.reject(DioException(
+        requestOptions: request.requestOptions,
+        error: message,
+        type: DioExceptionType.unknown,
+      ));
+    }
+    _pendingRequests.clear();
   }
 
   // ============================================================
@@ -122,127 +157,51 @@ class ApiService {
     }
   }
 
+  Future<void> logout() async {
+    await SecureStorage.clearTokens();
+  }
+
   // ============================================================
-  // SEQUENTIAL PERFORMANCE TEST
+  // HTTP TEST (Used in HttpTestScreen)
   // ============================================================
 
-  Future<Map<String, dynamic>> testPerformance(int count) async {
+  Future<Map<String, dynamic>> testHttpApi(int count, {bool bypass = false}) async {
     int success = 0;
     int failure = 0;
     List<int> responseTimes = [];
+    List<String> logs = [];
+
+    final startTime = DateTime.now();
 
     for (int i = 0; i < count; i++) {
       try {
         final start = DateTime.now();
-        await _dio.get(AppConstants.profile);
-        final end = DateTime.now();
-        responseTimes.add(end.difference(start).inMilliseconds);
-        success++;
-      } catch (e) {
-        failure++;
-      }
-    }
 
-    final avgTime = responseTimes.isNotEmpty
-        ? responseTimes.reduce((a, b) => a + b) ~/ responseTimes.length
-        : 0;
-
-    return {
-      'total': count,
-      'success': success,
-      'failure': failure,
-      'avgResponseTime': avgTime,
-    };
-  }
-
-  // ============================================================
-  // SINGLE API CALL
-  // ============================================================
-
-  Future<Map<String, dynamic>> callApi() async {
-    try {
-      final start = DateTime.now();
-      final response = await _dio.get(AppConstants.profile);
-      final duration = DateTime.now().difference(start).inMilliseconds;
-      return {
-        'success': true,
-        'data': response.data,
-        'duration': duration,
-      };
-    } on DioException catch (e) {
-      return {
-        'success': false,
-        'message': e.response?.data['message'] ?? e.message,
-      };
-    }
-  }
-
-  // ============================================================
-  // 500 ERROR TEST (SENTRY)
-  // ============================================================
-
-  Future<Map<String, dynamic>> test500Error() async {
-    try {
-      final response = await _dio.get('/force-error');
-      return {
-        'success': true,
-        'data': response.data,
-        'statusCode': response.statusCode,
-      };
-    } on DioException catch (e) {
-      return {
-        'success': false,
-        'message': e.response?.data['message'] ?? e.message,
-        'statusCode': e.response?.statusCode,
-      };
-    }
-  }
-
-  // ============================================================
-  // PARALLEL PERFORMANCE TEST (WITH BYPASS HEADER)
-  // ============================================================
-
-  Future<Map<String, dynamic>> testPerformanceParallel(int count, {bool bypass = false}) async {
-    int success = 0;
-    int failure = 0;
-    List<int> responseTimes = [];
-
-    final requests = List.generate(count, (_) async {
-      try {
-        final start = DateTime.now();
         final response = await _dio.get(
-          AppConstants.profile,
+          '/api/health',
           options: Options(
-            headers: {
-              'x-bypass-rate-limit': bypass ? 'true' : 'false',
-            },
+            headers: bypass ? {'x-bypass-rate-limit': 'true'} : {},
           ),
         );
+
         final end = DateTime.now();
         final duration = end.difference(start).inMilliseconds;
-        return {'response': response, 'duration': duration};
-      } catch (_) {
-        return null;
-      }
-    });
+        responseTimes.add(duration);
 
-    final results = await Future.wait(requests);
-
-    for (final result in results) {
-      if (result != null) {
-        final response = result['response'] as Response?;
-        if (response != null && response.statusCode == 200) {
+        if (response.statusCode == 200) {
           success++;
-          final duration = result['duration'] as int? ?? 100;  // ✅ Explicit cast
-          responseTimes.add(duration);
+          logs.add('✅ $i: ${response.statusCode} (${duration}ms)');
         } else {
           failure++;
+          logs.add('❌ $i: ${response.statusCode} (${duration}ms)');
         }
-      } else {
+      } catch (e) {
         failure++;
+        logs.add('❌ $i: Error - $e');
       }
     }
 
+    final totalTime = DateTime.now().difference(startTime).inMilliseconds;
     final avgTime = responseTimes.isNotEmpty
         ? responseTimes.reduce((a, b) => a + b) ~/ responseTimes.length
         : 0;
@@ -252,53 +211,21 @@ class ApiService {
       'success': success,
       'failure': failure,
       'avgResponseTime': avgTime,
+      'totalTime': totalTime,
+      'logs': logs,
     };
   }
-  // ============================================================
-  // LEGACY: OLD PARALLEL (KEPT FOR BACKWARD COMPATIBILITY)
-  // ============================================================
+}
 
-  Future<Map<String, dynamic>> testPerformanceParallelLegacy(int count) async {
-    int success = 0;
-    int failure = 0;
-    List<int> responseTimes = [];
+// ✅ Request queue model
+class QueuedRequest {
+  final RequestOptions requestOptions;
+  final void Function(Response<dynamic>) resolve;
+  final void Function(DioException) reject;
 
-    final requests = List.generate(count, (_) async {
-      try {
-        return await _dio.get('/api/auth/profile');
-      } catch (_) {
-        return null;
-      }
-    });
-
-    final results = await Future.wait<Response?>(requests);
-
-    for (final result in results) {
-      if (result?.statusCode == 200) {
-        success++;
-        responseTimes.add(result!.extra['duration'] ?? 100);
-      } else {
-        failure++;
-      }
-    }
-
-    final avgTime = responseTimes.isNotEmpty
-        ? responseTimes.reduce((a, b) => a + b) ~/ responseTimes.length
-        : 0;
-
-    return {
-      'total': count,
-      'success': success,
-      'failure': failure,
-      'avgResponseTime': avgTime,
-    };
-  }
-
-  // ============================================================
-  // LOGOUT
-  // ============================================================
-
-  Future<void> logout() async {
-    await SecureStorage.clearTokens();
-  }
+  QueuedRequest({
+    required this.requestOptions,
+    required this.resolve,
+    required this.reject,
+  });
 }

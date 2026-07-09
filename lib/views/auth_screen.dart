@@ -14,8 +14,8 @@ class AuthScreen extends StatefulWidget {
 class _AuthScreenState extends State<AuthScreen> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
-  final _emailController = TextEditingController();
-  final _passwordController = TextEditingController();
+  final _emailController = TextEditingController(text: 'test1@gmail.com');
+  final _passwordController = TextEditingController(text: '123456');
   bool _isLogin = true;
 
   @override
@@ -23,13 +23,18 @@ class _AuthScreenState extends State<AuthScreen> {
     final viewModel = context.watch<AuthViewModel>();
 
     return Scaffold(
-      appBar: AppBar(title: const Text('FinFlow AI'), centerTitle: true),
+      appBar: AppBar(
+        title: const Text('FinFlow AI'),
+        centerTitle: true,
+        backgroundColor: Colors.deepPurple,
+        foregroundColor: Colors.white,
+      ),
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(24),
           child: Form(
             key: _formKey,
-            child: SingleChildScrollView(  // 👈 SCROLLABLE BANAYA
+            child: SingleChildScrollView(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -37,7 +42,10 @@ class _AuthScreenState extends State<AuthScreen> {
                   const SizedBox(height: 20),
                   Text(
                     _isLogin ? 'Welcome Back!' : 'Create Account',
-                    style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
+                    style: const TextStyle(
+                      fontSize: 28,
+                      fontWeight: FontWeight.bold,
+                    ),
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 30),
@@ -71,7 +79,9 @@ class _AuthScreenState extends State<AuthScreen> {
                   const SizedBox(height: 16),
                   TextButton(
                     onPressed: () => setState(() => _isLogin = !_isLogin),
-                    child: Text(_isLogin ? 'New user? Register' : 'Already have account? Login'),
+                    child: Text(
+                      _isLogin ? 'New user? Register' : 'Already have account? Login',
+                    ),
                   ),
                   if (viewModel.errorMessage != null)
                     Padding(

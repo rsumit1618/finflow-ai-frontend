@@ -65,4 +65,16 @@ FinFlow AI is a high-performance, cross-platform application (Web & Android) des
     *   **Web**: `flutter run -d chrome`
 
 ---
+
+## 📦 Download & Demo
+
+### 📱 Android
+You can download the latest production APK here:
+[**Download finflow-ai.apk**](release_builds/finflow-ai.apk)
+
+### 🌐 Web Version
+The web version is optimized for desktop and mobile browsers. You can access the local build here:
+[**Open Web App**](release_builds/web_app/index.html)
+
+---
 *FinFlow AI - Empowering your financial journey with beautiful, secure, and responsive technology.*

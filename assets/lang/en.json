@@ -1,0 +1,19 @@
+{
+  "app_title": "FinFlow AI",
+  "home": "Home",
+  "settings": "Settings",
+  "profile": "Profile",
+  "dark_mode": "Dark Mode",
+  "language": "Language",
+  "primary_color": "Accent Color",
+  "choose_font": "Typography",
+  "logout": "Logout",
+  "welcome": "Welcome to FinFlow AI",
+  "select_option": "Select an option from the side menu",
+  "offline_games": "Offline Games",
+  "change_theme": "Change Theme",
+  "appearance": "Appearance",
+  "personalization": "Personalization",
+  "general": "General",
+  "system_settings": "System Settings"
+}

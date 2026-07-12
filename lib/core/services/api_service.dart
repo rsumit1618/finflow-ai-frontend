@@ -1,6 +1,9 @@
+import 'dart:typed_data';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
+import 'package:http_parser/http_parser.dart';
 import '../../models/auth_model.dart';
+import '../../models/document_model.dart';
 import '../constants/app_constants.dart';
 import '../storage/secure_storage.dart';
 
@@ -33,45 +36,56 @@ class ApiService {
         }
         return handler.next(options);
       },
-      onResponse: (response, handler) => handler.next(response),
       onError: (error, handler) async {
-        if (error.response?.statusCode == 401 && !_isRefreshing) {
-          _isRefreshing = true;
+        if (error.response?.statusCode == 401) {
+          // If already refreshing, just queue this request
+          if (_isRefreshing) {
+            _pendingRequests.add(QueuedRequest(
+              requestOptions: error.requestOptions,
+              resolve: handler.resolve,
+              reject: handler.reject,
+            ));
+            return;
+          }
 
+          _isRefreshing = true;
+          
+          // Queue the current request first
           _pendingRequests.add(QueuedRequest(
             requestOptions: error.requestOptions,
             resolve: handler.resolve,
-            reject: handler.next,
+            reject: handler.reject,
           ));
 
           try {
             final refreshToken = await SecureStorage.getRefreshToken();
             if (refreshToken != null) {
-              final response = await _dio.post(
+              // Create a separate dio instance to avoid interceptor loop
+              final refreshDio = Dio(BaseOptions(baseUrl: AppConstants.baseUrl));
+              final response = await refreshDio.post(
                 AppConstants.refresh,
                 data: {'refreshToken': refreshToken},
               );
+              
               if (response.statusCode == 200) {
                 final newToken = response.data['data']['accessToken'];
                 await SecureStorage.saveAccessToken(newToken);
-
                 _isRefreshing = false;
                 _processPendingRequests(newToken);
                 return;
               }
             }
-            await SecureStorage.clearTokens();
-            _isRefreshing = false;
-            _rejectAllPending('Session expired. Please login again.');
-            return handler.next(error);
           } catch (e) {
-            await SecureStorage.clearTokens();
-            _isRefreshing = false;
-            _rejectAllPending('Session expired. Please login again.');
-            return handler.next(error);
+            debugPrint('Token refresh failed: $e');
           }
+
+          // If we reach here, refresh failed
+          await SecureStorage.clearTokens();
+          _isRefreshing = false;
+          _rejectAllPending('Session expired. Please login again.');
+          return; // Handlers were already called inside _rejectAllPending
         }
-        _isRefreshing = false;
+        
         return handler.next(error);
       },
     ));
@@ -159,6 +173,114 @@ class ApiService {
 
   Future<void> logout() async {
     await SecureStorage.clearTokens();
+  }
+
+  // ============================================================
+  // FILE UPLOAD
+  // ============================================================
+
+  Future<Map<String, dynamic>> uploadPdf(String filePath, String fileName, {String category = 'GENERAL'}) async {
+    try {
+      FormData formData = FormData.fromMap({
+        'file': await MultipartFile.fromFile(
+          filePath, 
+          filename: fileName,
+          contentType: MediaType('application', 'pdf'),
+        ),
+        'category': category,
+      });
+
+      final response = await _dio.post(
+        AppConstants.uploadPdf,
+        data: formData,
+      );
+
+      return {'success': true, 'data': response.data};
+    } on DioException catch (e) {
+      return {
+        'success': false,
+        'message': e.response?.data['message'] ?? e.message,
+      };
+    } catch (e) {
+      return {'success': false, 'message': e.toString()};
+    }
+  }
+
+  Future<Map<String, dynamic>> uploadPdfFromBytes(Uint8List bytes, String fileName, {String category = 'GENERAL'}) async {
+    try {
+      FormData formData = FormData.fromMap({
+        'file': MultipartFile.fromBytes(
+          bytes, 
+          filename: fileName,
+          contentType: MediaType('application', 'pdf'),
+        ),
+        'category': category,
+      });
+
+      final response = await _dio.post(
+        AppConstants.uploadPdf,
+        data: formData,
+      );
+
+      return {'success': true, 'data': response.data};
+    } on DioException catch (e) {
+      return {
+        'success': false,
+        'message': e.response?.data['message'] ?? e.message,
+      };
+    } catch (e) {
+      return {'success': false, 'message': e.toString()};
+    }
+  }
+
+  Future<Map<String, dynamic>> fetchDocuments({
+    int page = 1,
+    int limit = 10,
+    String? category,
+  }) async {
+    try {
+      final response = await _dio.get(
+        AppConstants.getDocuments,
+        queryParameters: {
+          'page': page,
+          'limit': limit,
+          if (category != null) 'category': category,
+        },
+      );
+
+      final body = response.data;
+      List<DocumentModel> docs = (body['data']['documents'] as List)
+          .map((item) => DocumentModel.fromJson(item))
+          .toList();
+      PaginationInfo meta = PaginationInfo.fromJson(body['data']['pagination']);
+
+      return {
+        'success': true,
+        'documents': docs,
+        'pagination': meta,
+      };
+    } on DioException catch (e) {
+      return {
+        'success': false,
+        'message': e.response?.data['message'] ?? e.message,
+      };
+    } catch (e) {
+      return {'success': false, 'message': e.toString()};
+    }
+  }
+
+  Future<Map<String, dynamic>> deleteDocument(int id) async {
+    try {
+      final response = await _dio.delete('${AppConstants.getDocuments}/$id');
+      return {'success': true, 'message': response.data['message']};
+    } on DioException catch (e) {
+      return {
+        'success': false,
+        'message': e.response?.data['message'] ?? e.message,
+      };
+    } catch (e) {
+      return {'success': false, 'message': e.toString()};
+    }
   }
 
   // ============================================================

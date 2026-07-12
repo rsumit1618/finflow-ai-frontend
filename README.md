@@ -42,17 +42,6 @@ FinFlow AI is a high-performance, cross-platform application (Web & Android) des
 
 ---
 
-## 📂 Project Structure
-
-*   `lib/core/theme`: Dynamic Theme Provider and Material 3 configurations.
-*   `lib/core/services`: Dio-based API service with auth-handshaking.
-*   `lib/core/localization`: JSON translation engine.
-*   `lib/views`: Fully responsive screens (Home, Profile, Settings, Auth).
-*   `lib/models`: Null-safe data models for Documents and Pagination.
-*   `assets/lang`: Centralized language management.
-
----
-
 ## 🏁 Getting Started
 
 1.  **Clone the project**
@@ -66,15 +55,15 @@ FinFlow AI is a high-performance, cross-platform application (Web & Android) des
 
 ---
 
-## 📦 Download & Demo
+## 📦 Live Demo & Download
 
-### 📱 Android
-You can download the latest production APK here:
-[**Download finflow-ai.apk**](release_builds/finflow-ai.apk)
+### 🌐 Web Version (Instant Access)
+Use the application directly in your browser without any installation:
+[**🚀 Launch FinFlow AI Web App**](https://rsumit1618.github.io/finflow-ai-frontend/)
 
-### 🌐 Web Version
-The web version is optimized for desktop and mobile browsers. You can access the local build here:
-[**Open Web App**](release_builds/web_app/index.html)
+### 📱 Android (App Download)
+Download and install the production-ready APK on your Android device:
+[**📥 Download finflow-ai.apk**](https://github.com/rsumit1618/finflow-ai-frontend/raw/main/release_builds/finflow-ai.apk)
 
 ---
 *FinFlow AI - Empowering your financial journey with beautiful, secure, and responsive technology.*

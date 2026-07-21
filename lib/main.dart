@@ -1,64 +1,52 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_localizations/flutter_localizations.dart';
-import 'package:provider/provider.dart';
-import 'core/theme/theme_provider.dart';
-import 'core/localization/app_localizations.dart';
-import 'viewmodels/auth_viewmodel.dart';
-import 'views/auth_screen.dart';
-import 'views/home_screen.dart';
-import 'views/http_test_screen.dart';
-import 'views/profile_screen.dart';
-import 'views/settings_screen.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'core/common/routing/app_router.dart';
+import 'features/auth/presentation/providers/auth_providers.dart';
+import 'features/auth/presentation/providers/auth_state.dart';
+import 'features/auth/presentation/screens/login_screen.dart';
+import 'features/video/presentation/screens/video_list_screen.dart';
 
-void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
+void main() {
   runApp(
-    MultiProvider(
-      providers: [
-        ChangeNotifierProvider(create: (_) => ThemeProvider()),
-        ChangeNotifierProvider(create: (_) => AuthViewModel()..checkLoginStatus()),
-      ],
-      child: const FinFlowApp(),
+    const ProviderScope(
+      child: MyApp(),
     ),
   );
 }
 
-class FinFlowApp extends StatelessWidget {
-  const FinFlowApp({Key? key}) : super(key: key);
+class MyApp extends ConsumerWidget {
+  const MyApp({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final themeProvider = Provider.of<ThemeProvider>(context);
+  Widget build(BuildContext context, WidgetRef ref) {
+    final authState = ref.watch(authNotifierProvider);
 
     return MaterialApp(
       title: 'FinFlow AI',
       debugShowCheckedModeBanner: false,
-      theme: themeProvider.getThemeData(false),
-      darkTheme: themeProvider.getThemeData(true),
-      themeMode: themeProvider.themeMode,
-      supportedLocales: const [
-        Locale('en', ''),
-      ],
-      localizationsDelegates: const [
-        AppLocalizations.delegate,
-        GlobalMaterialLocalizations.delegate,
-        GlobalWidgetsLocalizations.delegate,
-        GlobalCupertinoLocalizations.delegate,
-      ],
-      initialRoute: '/',
-      routes: {
-        '/': (context) => Consumer<AuthViewModel>(
-          builder: (context, auth, _) {
-            if (auth.isLoggedIn) {
-              return const HomeScreen();
-            }
-            return const AuthScreen();
-          },
+      theme: ThemeData(
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
+        useMaterial3: true,
+        inputDecorationTheme: InputDecorationTheme(
+          filled: true,
+          fillColor: Colors.grey.shade50,
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
         ),
-        '/http-test': (context) => const HttpTestScreen(),
-        '/profile': (context) => const ProfileScreen(),
-        '/settings': (context) => const SettingsScreen(),
-      },
+      ),
+      onGenerateRoute: AppRouter.generateRoute,
+      home: _getHome(authState),
     );
+  }
+
+  Widget _getHome(AuthState state) {
+    if (state is AuthInitial || state is AuthLoading) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
+    if (state is AuthAuthenticated) {
+      return const VideoListScreen();
+    }
+    return const LoginScreen();
   }
 }

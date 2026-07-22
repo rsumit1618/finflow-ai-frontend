@@ -14,10 +14,6 @@ T _$identity<T>(T value) => value;
 final _privateConstructorUsedError = UnsupportedError(
     'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#adding-getters-and-methods-to-our-models');
 
-UserModel _$UserModelFromJson(Map<String, dynamic> json) {
-  return _UserModel.fromJson(json);
-}
-
 /// @nodoc
 mixin _$UserModel {
   String get id => throw _privateConstructorUsedError;
@@ -26,11 +22,11 @@ mixin _$UserModel {
   String? get lastName => throw _privateConstructorUsedError;
   int? get age => throw _privateConstructorUsedError;
   String? get college => throw _privateConstructorUsedError;
-  String? get qualification => throw _privateConstructorUsedError;
+  int? get qualificationYear => throw _privateConstructorUsedError;
+  String? get address => throw _privateConstructorUsedError;
+  String? get highestQualification => throw _privateConstructorUsedError;
+  String? get profileImage => throw _privateConstructorUsedError;
   String get createdAt => throw _privateConstructorUsedError;
-
-  /// Serializes this UserModel to a JSON map.
-  Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
 
   /// Create a copy of UserModel
   /// with the given fields replaced by the non-null parameter values.
@@ -51,7 +47,10 @@ abstract class $UserModelCopyWith<$Res> {
       String? lastName,
       int? age,
       String? college,
-      String? qualification,
+      int? qualificationYear,
+      String? address,
+      String? highestQualification,
+      String? profileImage,
       String createdAt});
 }
 
@@ -76,7 +75,10 @@ class _$UserModelCopyWithImpl<$Res, $Val extends UserModel>
     Object? lastName = freezed,
     Object? age = freezed,
     Object? college = freezed,
-    Object? qualification = freezed,
+    Object? qualificationYear = freezed,
+    Object? address = freezed,
+    Object? highestQualification = freezed,
+    Object? profileImage = freezed,
     Object? createdAt = null,
   }) {
     return _then(_value.copyWith(
@@ -104,9 +106,21 @@ class _$UserModelCopyWithImpl<$Res, $Val extends UserModel>
           ? _value.college
           : college // ignore: cast_nullable_to_non_nullable
               as String?,
-      qualification: freezed == qualification
-          ? _value.qualification
-          : qualification // ignore: cast_nullable_to_non_nullable
+      qualificationYear: freezed == qualificationYear
+          ? _value.qualificationYear
+          : qualificationYear // ignore: cast_nullable_to_non_nullable
+              as int?,
+      address: freezed == address
+          ? _value.address
+          : address // ignore: cast_nullable_to_non_nullable
+              as String?,
+      highestQualification: freezed == highestQualification
+          ? _value.highestQualification
+          : highestQualification // ignore: cast_nullable_to_non_nullable
+              as String?,
+      profileImage: freezed == profileImage
+          ? _value.profileImage
+          : profileImage // ignore: cast_nullable_to_non_nullable
               as String?,
       createdAt: null == createdAt
           ? _value.createdAt
@@ -131,7 +145,10 @@ abstract class _$$UserModelImplCopyWith<$Res>
       String? lastName,
       int? age,
       String? college,
-      String? qualification,
+      int? qualificationYear,
+      String? address,
+      String? highestQualification,
+      String? profileImage,
       String createdAt});
 }
 
@@ -154,7 +171,10 @@ class __$$UserModelImplCopyWithImpl<$Res>
     Object? lastName = freezed,
     Object? age = freezed,
     Object? college = freezed,
-    Object? qualification = freezed,
+    Object? qualificationYear = freezed,
+    Object? address = freezed,
+    Object? highestQualification = freezed,
+    Object? profileImage = freezed,
     Object? createdAt = null,
   }) {
     return _then(_$UserModelImpl(
@@ -182,9 +202,21 @@ class __$$UserModelImplCopyWithImpl<$Res>
           ? _value.college
           : college // ignore: cast_nullable_to_non_nullable
               as String?,
-      qualification: freezed == qualification
-          ? _value.qualification
-          : qualification // ignore: cast_nullable_to_non_nullable
+      qualificationYear: freezed == qualificationYear
+          ? _value.qualificationYear
+          : qualificationYear // ignore: cast_nullable_to_non_nullable
+              as int?,
+      address: freezed == address
+          ? _value.address
+          : address // ignore: cast_nullable_to_non_nullable
+              as String?,
+      highestQualification: freezed == highestQualification
+          ? _value.highestQualification
+          : highestQualification // ignore: cast_nullable_to_non_nullable
+              as String?,
+      profileImage: freezed == profileImage
+          ? _value.profileImage
+          : profileImage // ignore: cast_nullable_to_non_nullable
               as String?,
       createdAt: null == createdAt
           ? _value.createdAt
@@ -195,7 +227,7 @@ class __$$UserModelImplCopyWithImpl<$Res>
 }
 
 /// @nodoc
-@JsonSerializable()
+
 class _$UserModelImpl extends _UserModel {
   const _$UserModelImpl(
       {required this.id,
@@ -204,12 +236,12 @@ class _$UserModelImpl extends _UserModel {
       this.lastName,
       this.age,
       this.college,
-      this.qualification,
+      this.qualificationYear,
+      this.address,
+      this.highestQualification,
+      this.profileImage,
       required this.createdAt})
       : super._();
-
-  factory _$UserModelImpl.fromJson(Map<String, dynamic> json) =>
-      _$$UserModelImplFromJson(json);
 
   @override
   final String id;
@@ -224,13 +256,19 @@ class _$UserModelImpl extends _UserModel {
   @override
   final String? college;
   @override
-  final String? qualification;
+  final int? qualificationYear;
+  @override
+  final String? address;
+  @override
+  final String? highestQualification;
+  @override
+  final String? profileImage;
   @override
   final String createdAt;
 
   @override
   String toString() {
-    return 'UserModel(id: $id, email: $email, firstName: $firstName, lastName: $lastName, age: $age, college: $college, qualification: $qualification, createdAt: $createdAt)';
+    return 'UserModel(id: $id, email: $email, firstName: $firstName, lastName: $lastName, age: $age, college: $college, qualificationYear: $qualificationYear, address: $address, highestQualification: $highestQualification, profileImage: $profileImage, createdAt: $createdAt)';
   }
 
   @override
@@ -246,16 +284,31 @@ class _$UserModelImpl extends _UserModel {
                 other.lastName == lastName) &&
             (identical(other.age, age) || other.age == age) &&
             (identical(other.college, college) || other.college == college) &&
-            (identical(other.qualification, qualification) ||
-                other.qualification == qualification) &&
+            (identical(other.qualificationYear, qualificationYear) ||
+                other.qualificationYear == qualificationYear) &&
+            (identical(other.address, address) || other.address == address) &&
+            (identical(other.highestQualification, highestQualification) ||
+                other.highestQualification == highestQualification) &&
+            (identical(other.profileImage, profileImage) ||
+                other.profileImage == profileImage) &&
             (identical(other.createdAt, createdAt) ||
                 other.createdAt == createdAt));
   }
 
-  @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode => Object.hash(runtimeType, id, email, firstName, lastName,
-      age, college, qualification, createdAt);
+  int get hashCode => Object.hash(
+      runtimeType,
+      id,
+      email,
+      firstName,
+      lastName,
+      age,
+      college,
+      qualificationYear,
+      address,
+      highestQualification,
+      profileImage,
+      createdAt);
 
   /// Create a copy of UserModel
   /// with the given fields replaced by the non-null parameter values.
@@ -264,13 +317,6 @@ class _$UserModelImpl extends _UserModel {
   @pragma('vm:prefer-inline')
   _$$UserModelImplCopyWith<_$UserModelImpl> get copyWith =>
       __$$UserModelImplCopyWithImpl<_$UserModelImpl>(this, _$identity);
-
-  @override
-  Map<String, dynamic> toJson() {
-    return _$$UserModelImplToJson(
-      this,
-    );
-  }
 }
 
 abstract class _UserModel extends UserModel {
@@ -281,12 +327,12 @@ abstract class _UserModel extends UserModel {
       final String? lastName,
       final int? age,
       final String? college,
-      final String? qualification,
+      final int? qualificationYear,
+      final String? address,
+      final String? highestQualification,
+      final String? profileImage,
       required final String createdAt}) = _$UserModelImpl;
   const _UserModel._() : super._();
-
-  factory _UserModel.fromJson(Map<String, dynamic> json) =
-      _$UserModelImpl.fromJson;
 
   @override
   String get id;
@@ -301,7 +347,13 @@ abstract class _UserModel extends UserModel {
   @override
   String? get college;
   @override
-  String? get qualification;
+  int? get qualificationYear;
+  @override
+  String? get address;
+  @override
+  String? get highestQualification;
+  @override
+  String? get profileImage;
   @override
   String get createdAt;
 

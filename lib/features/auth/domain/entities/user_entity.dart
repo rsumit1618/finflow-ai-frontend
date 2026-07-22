@@ -7,7 +7,10 @@ class UserEntity extends Equatable {
   final String? lastName;
   final int? age;
   final String? college;
-  final String? qualification;
+  final int? qualificationYear;
+  final String? address;
+  final String? highestQualification;
+  final String? profileImage;
   final DateTime createdAt;
 
   const UserEntity({
@@ -17,10 +20,31 @@ class UserEntity extends Equatable {
     this.lastName,
     this.age,
     this.college,
-    this.qualification,
+    this.qualificationYear,
+    this.address,
+    this.highestQualification,
+    this.profileImage,
     required this.createdAt,
   });
 
+  bool get isProfileComplete => 
+    firstName != null && 
+    lastName != null && 
+    highestQualification != null && 
+    college != null;
+
   @override
-  List<Object?> get props => [id, email, firstName, lastName, age, college, qualification, createdAt];
+  List<Object?> get props => [
+        id,
+        email,
+        firstName,
+        lastName,
+        age,
+        college,
+        qualificationYear,
+        address,
+        highestQualification,
+        profileImage,
+        createdAt,
+      ];
 }

@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+import 'package:finflow_app/core/common/errors/failures.dart';
 import 'package:finflow_app/features/auth/domain/entities/user_entity.dart';
 
 abstract class AuthState extends Equatable {
@@ -30,8 +31,10 @@ class AuthUnauthenticated extends AuthState {
 
 class AuthError extends AuthState {
   final String message;
-  const AuthError(this.message);
+  final FailureType type;
+  
+  const AuthError(this.message, {this.type = FailureType.unknown});
 
   @override
-  List<Object?> get props => [message];
+  List<Object?> get props => [message, type];
 }

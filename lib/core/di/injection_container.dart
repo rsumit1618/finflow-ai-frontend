@@ -14,6 +14,17 @@ final authLocalDataSourceProvider = Provider<AuthLocalDataSource>((ref) {
 final dioProvider = Provider<Dio>((ref) {
   final dio = Dio();
   final localDataSource = ref.watch(authLocalDataSourceProvider);
+  
+  // Add Logging Interceptor
+  dio.interceptors.add(LogInterceptor(
+    request: true,
+    requestHeader: true,
+    requestBody: true,
+    responseHeader: true,
+    responseBody: true,
+    error: true,
+  ));
+
   dio.interceptors.add(AuthInterceptor(localDataSource: localDataSource, dio: dio));
   ApiClient(dio); 
   return dio;

@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'core/common/routing/app_router.dart';
-import 'features/auth/presentation/providers/auth_providers.dart';
-import 'features/auth/presentation/providers/auth_state.dart';
-import 'features/auth/presentation/screens/login_screen.dart';
-import 'features/video/presentation/screens/video_list_screen.dart';
+import 'package:finflow_app/core/common/utils/routing/app_router.dart';
+import 'package:finflow_app/features/auth/presentation/providers/auth_providers.dart';
+import 'package:finflow_app/features/auth/presentation/providers/auth_state.dart';
+import 'package:finflow_app/features/auth/presentation/screens/login_screen.dart';
+import 'package:finflow_app/features/video/presentation/screens/video_list_screen.dart';
 
 void main() {
   runApp(

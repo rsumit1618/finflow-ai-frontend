@@ -1,15 +1,23 @@
 import 'package:dio/dio.dart';
-import 'package:finflow_app/core/common/constants/api_constants.dart';
-import 'package:finflow_app/core/common/errors/exceptions.dart';
-import 'package:finflow_app/features/auth/data/models/auth_response_model.dart';
+import 'package:finflow_app/core/common/network/constants/api_constants.dart';
+import 'package:finflow_app/core/common/business/errors/exceptions.dart';
+import 'package:finflow_app/features/auth/data/models/auth_response.dart';
 import 'package:finflow_app/features/auth/data/models/user_model.dart';
 
 abstract class AuthRemoteDataSource {
-  Future<AuthResponseModel> login(
-      {required String email, required String password});
-  Future<AuthResponseModel> register(
-      {required String email, required String password});
+  Future<AuthResponse> login({required String email, required String password});
+  Future<AuthResponse> register({required String email, required String password});
   Future<UserModel> getProfile();
+  Future<UserModel> updateProfile({
+    required String firstName,
+    required String lastName,
+    required int age,
+    required String college,
+    required int qualificationYear,
+    required String address,
+    required String highestQualification,
+    String? profileImage,
+  });
   Future<void> logout();
 }
 
@@ -19,39 +27,34 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   AuthRemoteDataSourceImpl({required this.dio});
 
   @override
-  Future<AuthResponseModel> login(
-      {required String email, required String password}) async {
+  Future<AuthResponse> login({required String email, required String password}) async {
     try {
       final response = await dio.post(
         ApiConstants.login,
         data: {'email': email, 'password': password},
       );
-      if (response.data['success'] == true) {
-        return AuthResponseModel.fromJson(response.data['data']);
-      } else {
-        throw ServerException(response.data['message'] ?? 'Login failed');
-      }
+      return AuthResponse.fromJson(response.data as Map<String, dynamic>);
     } on DioException catch (e) {
-      throw ServerException(e.response?.data['message'] ?? 'Server Error');
+      if (e.response?.data != null && e.response?.data is Map) {
+        return AuthResponse.fromJson(e.response!.data as Map<String, dynamic>);
+      }
+      throw ServerException(e.message ?? 'Server Error');
     }
   }
 
   @override
-  Future<AuthResponseModel> register(
-      {required String email, required String password}) async {
+  Future<AuthResponse> register({required String email, required String password}) async {
     try {
       final response = await dio.post(
         ApiConstants.register,
         data: {'email': email, 'password': password},
       );
-      if (response.data['success'] == true) {
-        return AuthResponseModel.fromJson(response.data['data']);
-      } else {
-        throw ServerException(
-            response.data['message'] ?? 'Registration failed');
-      }
+      return AuthResponse.fromJson(response.data as Map<String, dynamic>);
     } on DioException catch (e) {
-      throw ServerException(e.response?.data['message'] ?? 'Server Error');
+      if (e.response?.data != null && e.response?.data is Map) {
+        return AuthResponse.fromJson(e.response!.data as Map<String, dynamic>);
+      }
+      throw ServerException(e.message ?? 'Server Error');
     }
   }
 
@@ -60,10 +63,44 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
     try {
       final response = await dio.get(ApiConstants.profile);
       if (response.data['success'] == true) {
-        return UserModel.fromJson(response.data['data']);
+        return UserModel.fromJson(response.data['data'] as Map<String, dynamic>);
       } else {
-        throw ServerException(
-            response.data['message'] ?? 'Failed to get profile');
+        throw ServerException(response.data['message'] ?? 'Failed to get profile');
+      }
+    } on DioException catch (e) {
+      throw ServerException(e.response?.data['message'] ?? 'Server Error');
+    }
+  }
+
+  @override
+  Future<UserModel> updateProfile({
+    required String firstName,
+    required String lastName,
+    required int age,
+    required String college,
+    required int qualificationYear,
+    required String address,
+    required String highestQualification,
+    String? profileImage,
+  }) async {
+    try {
+      final response = await dio.put(
+        ApiConstants.profile,
+        data: {
+          'firstName': firstName,
+          'lastName': lastName,
+          'age': age,
+          'college': college,
+          'qualificationYear': qualificationYear,
+          'address': address,
+          'highestQualification': highestQualification,
+          'profileImage': profileImage,
+        },
+      );
+      if (response.data['success'] == true) {
+        return UserModel.fromJson(response.data['data'] as Map<String, dynamic>);
+      } else {
+        throw ServerException(response.data['message'] ?? 'Update failed');
       }
     } on DioException catch (e) {
       throw ServerException(e.response?.data['message'] ?? 'Server Error');
@@ -75,7 +112,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
     try {
       await dio.post(ApiConstants.logout);
     } on DioException {
-      // Even if server logout fails, we might want to continue local logout
+      // Ignore server logout errors
     }
   }
 }

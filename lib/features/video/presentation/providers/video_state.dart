@@ -32,6 +32,17 @@ class VideoError extends VideoState {
 
 class VideoUploading extends VideoState {}
 
+class VideoUploadProgress extends VideoState {
+  final double progress; // 0.0 to 1.0
+  final String statusText;
+
+  const VideoUploadProgress(
+      {required this.progress, this.statusText = 'Uploading...'});
+
+  @override
+  List<Object?> get props => [progress, statusText];
+}
+
 class VideoUploadSuccess extends VideoState {
   final List<VideoEntity> uploadedVideos;
   const VideoUploadSuccess(this.uploadedVideos);

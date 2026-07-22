@@ -1,23 +1,34 @@
 import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:rxdart/rxdart.dart';
-import 'package:finflow_app/features/auth/domain/repositories/auth_repository.dart';
+import 'package:finflow_app/core/common/business/usecases/usecase.dart';
+import 'package:finflow_app/features/auth/domain/usecases/login_usecase.dart';
+import 'package:finflow_app/features/auth/domain/usecases/register_usecase.dart';
+import 'package:finflow_app/features/auth/domain/usecases/get_profile_usecase.dart';
+import 'package:finflow_app/features/auth/domain/usecases/update_profile_usecase.dart';
+import 'package:finflow_app/features/auth/domain/usecases/logout_usecase.dart';
+import 'package:finflow_app/features/auth/domain/usecases/is_logged_in_usecase.dart';
 import 'package:finflow_app/features/auth/presentation/providers/auth_state.dart';
 
-/// StateNotifier managing authentication state using Riverpod.
-///
-/// Handles login, register, logout, token-based session restoration,
-/// and profile fetching. Errors from profile fetch after login are now
-/// properly propagated as [AuthError] instead of silently falling back to
-/// [AuthUnauthenticated].
 class AuthNotifier extends StateNotifier<AuthState> {
-  final AuthRepository _repository;
+  final LoginUseCase loginUseCase;
+  final RegisterUseCase registerUseCase;
+  final GetProfileUseCase getProfileUseCase;
+  final UpdateProfileUseCase updateProfileUseCase;
+  final LogoutUseCase logoutUseCase;
+  final IsLoggedInUseCase isLoggedInUseCase;
 
-  // RxDart subjects for internal reactive logic if needed
   final _emailSubject = BehaviorSubject<String>();
   final _passwordSubject = BehaviorSubject<String>();
 
-  AuthNotifier(this._repository) : super(AuthInitial()) {
+  AuthNotifier({
+    required this.loginUseCase,
+    required this.registerUseCase,
+    required this.getProfileUseCase,
+    required this.updateProfileUseCase,
+    required this.logoutUseCase,
+    required this.isLoggedInUseCase,
+  }) : super(AuthInitial()) {
     checkAuthStatus();
   }
 
@@ -27,11 +38,9 @@ class AuthNotifier extends StateNotifier<AuthState> {
   void updateEmail(String email) => _emailSubject.add(email);
   void updatePassword(String password) => _passwordSubject.add(password);
 
-  /// Checks if the user has a valid stored session token.
-  /// If yes, tries to fetch profile; otherwise shows unauthenticated state.
   Future<void> checkAuthStatus() async {
     state = AuthLoading();
-    final result = await _repository.isLoggedIn();
+    final result = await isLoggedInUseCase(NoParams());
     result.fold(
       (failure) => state = AuthUnauthenticated(message: failure.message),
       (isLoggedIn) async {
@@ -44,42 +53,44 @@ class AuthNotifier extends StateNotifier<AuthState> {
     );
   }
 
-  /// Authenticates user with email and password.
-  /// On success, fetches profile. On failure, shows [AuthError] with message.
   Future<void> login(String email, String password) async {
     state = AuthLoading();
-    final result = await _repository.login(email: email, password: password);
+    final result = await loginUseCase(LoginParams(email: email, password: password));
     result.fold(
-      (failure) => state = AuthError(failure.message),
+      (failure) => state = AuthError(failure.message, type: failure.type),
       (tokens) => getProfile(),
     );
   }
 
-  /// Registers a new user with email and password.
-  /// On success, fetches profile. On failure, shows [AuthError] with message.
   Future<void> register(String email, String password) async {
     state = AuthLoading();
-    final result = await _repository.register(email: email, password: password);
+    final result = await registerUseCase(RegisterParams(email: email, password: password));
     result.fold(
-      (failure) => state = AuthError(failure.message),
+      (failure) => state = AuthError(failure.message, type: failure.type),
       (tokens) => getProfile(),
     );
   }
 
-  /// Fetches the authenticated user's profile.
-  /// On failure, sets [AuthError] (previously was [AuthUnauthenticated] — fixed).
   Future<void> getProfile() async {
-    final result = await _repository.getProfile();
+    final result = await getProfileUseCase(NoParams());
     result.fold(
-      (failure) => state = AuthError(failure.message),
+      (failure) => state = AuthError(failure.message, type: failure.type),
       (user) => state = AuthAuthenticated(user),
     );
   }
 
-  /// Logs the user out, clears tokens, and sets [AuthUnauthenticated].
+  Future<void> updateProfile(UpdateProfileParams params) async {
+    state = AuthLoading();
+    final result = await updateProfileUseCase(params);
+    result.fold(
+      (failure) => state = AuthError(failure.message, type: failure.type),
+      (user) => state = AuthAuthenticated(user),
+    );
+  }
+
   Future<void> logout() async {
     state = AuthLoading();
-    await _repository.logout();
+    await logoutUseCase(NoParams());
     state = const AuthUnauthenticated();
   }
 

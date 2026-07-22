@@ -2,12 +2,19 @@ import 'package:flutter/material.dart';
 import 'package:finflow_app/features/auth/presentation/screens/login_screen.dart';
 import 'package:finflow_app/features/auth/presentation/screens/register_screen.dart';
 import 'package:finflow_app/features/video/presentation/screens/video_list_screen.dart';
+import 'package:finflow_app/features/auth/presentation/screens/profile_screen.dart';
+import 'package:finflow_app/features/auth/presentation/screens/update_profile_screen.dart';
+
+import 'package:finflow_app/features/auth/presentation/screens/settings_screen.dart';
 
 class AppRoutes {
   static const String initial = '/';
   static const String login = '/login';
   static const String register = '/register';
   static const String dashboard = '/dashboard';
+  static const String profile = '/profile';
+  static const String updateProfile = '/update-profile';
+  static const String settings = '/settings';
 }
 
 class AppRouter {
@@ -19,6 +26,12 @@ class AppRouter {
         return MaterialPageRoute(builder: (_) => const RegisterScreen());
       case AppRoutes.dashboard:
         return MaterialPageRoute(builder: (_) => const VideoListScreen());
+      case AppRoutes.profile:
+        return MaterialPageRoute(builder: (_) => const ProfileScreen());
+      case AppRoutes.updateProfile:
+        return MaterialPageRoute(builder: (_) => const UpdateProfileScreen());
+      case AppRoutes.settings:
+        return MaterialPageRoute(builder: (_) => const SettingsScreen());
       default:
         return MaterialPageRoute(
           builder: (_) => Scaffold(

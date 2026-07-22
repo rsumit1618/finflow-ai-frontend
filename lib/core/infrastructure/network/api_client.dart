@@ -1,5 +1,5 @@
 import 'package:dio/dio.dart';
-import 'package:finflow_app/core/common/constants/api_constants.dart';
+import 'package:finflow_app/core/common/network/constants/api_constants.dart';
 
 class ApiClient {
   final Dio dio;

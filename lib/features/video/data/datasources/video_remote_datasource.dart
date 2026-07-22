@@ -1,15 +1,17 @@
-import 'dart:io';
 import 'package:dio/dio.dart';
-import 'package:finflow_app/core/common/constants/api_constants.dart';
-import 'package:finflow_app/core/common/errors/exceptions.dart';
-import 'package:finflow_app/features/video/data/models/video_model.dart';
+import 'package:http_parser/http_parser.dart';
+import 'package:finflow_app/core/common/network/constants/api_constants.dart';
+import 'package:finflow_app/core/common/business/errors/exceptions.dart';
+import 'package:finflow_app/core/common/models/file_upload_model.dart';
+import 'package:finflow_app/features/video/data/models/video_response.dart';
 
 abstract class VideoRemoteDataSource {
-  Future<List<VideoModel>> getVideos({int page = 1, int limit = 10});
-  Future<VideoModel> getVideo(String id);
-  Future<List<VideoModel>> uploadVideos(List<File> videos);
+  Future<VideoResponse> getVideos({int page = 1, int limit = 10});
+  Future<Video> getVideo(String id);
+  Future<VideoResponse> uploadVideos(List<FileUploadModel> videos,
+      {void Function(int, int)? onProgress});
   Future<void> deleteVideo(String id);
-  Future<String> uploadThumbnail(String id, File thumbnail);
+  Future<String> uploadThumbnail(String id, FileUploadModel thumbnail);
 }
 
 class VideoRemoteDataSourceImpl implements VideoRemoteDataSource {
@@ -18,30 +20,24 @@ class VideoRemoteDataSourceImpl implements VideoRemoteDataSource {
   VideoRemoteDataSourceImpl({required this.dio});
 
   @override
-  Future<List<VideoModel>> getVideos({int page = 1, int limit = 10}) async {
+  Future<VideoResponse> getVideos({int page = 1, int limit = 10}) async {
     try {
       final response = await dio.get(
         ApiConstants.videos,
         queryParameters: {'page': page, 'limit': limit},
       );
-      if (response.data['success'] == true) {
-        final List videos = response.data['data']['videos'];
-        return videos.map((v) => VideoModel.fromJson(v)).toList();
-      } else {
-        throw ServerException(
-            response.data['message'] ?? 'Failed to get videos');
-      }
+      return VideoResponse.fromJson(response.data as Map<String, dynamic>);
     } on DioException catch (e) {
       throw ServerException(e.response?.data['message'] ?? 'Server Error');
     }
   }
 
   @override
-  Future<VideoModel> getVideo(String id) async {
+  Future<Video> getVideo(String id) async {
     try {
       final response = await dio.get(ApiConstants.videoById(id));
       if (response.data['success'] == true) {
-        return VideoModel.fromJson(response.data['data']);
+        return Video.fromJson(response.data['data'] as Map<String, dynamic>);
       } else {
         throw ServerException(
             response.data['message'] ?? 'Failed to get video');
@@ -52,27 +48,44 @@ class VideoRemoteDataSourceImpl implements VideoRemoteDataSource {
   }
 
   @override
-  Future<List<VideoModel>> uploadVideos(List<File> videos) async {
+  Future<VideoResponse> uploadVideos(List<FileUploadModel> videos,
+      {void Function(int, int)? onProgress}) async {
     try {
-      final formData = FormData();
-      for (var file in videos) {
-        formData.files.add(MapEntry(
-          'videos',
-          await MultipartFile.fromFile(file.path,
-              filename: file.path.split('/').last),
-        ));
+      final List<MultipartFile> videoFiles = [];
+      for (var video in videos) {
+        if (video.bytes != null) {
+          // Web Upload
+          videoFiles.add(MultipartFile.fromBytes(
+            video.bytes!,
+            filename: video.name,
+            contentType: MediaType('video', video.format.replaceAll('.', '')),
+          ));
+        } else if (video.path != null) {
+          // Mobile Upload
+          videoFiles.add(await MultipartFile.fromFile(
+            video.path!,
+            filename: video.name,
+            contentType: MediaType('video', video.format.replaceAll('.', '')),
+          ));
+        }
       }
+
+      final formData = FormData.fromMap({
+        'videos': videoFiles,
+      });
 
       final response = await dio.post(
         ApiConstants.videos,
         data: formData,
+        options: Options(
+          contentType: 'multipart/form-data',
+          headers: {
+            'Accept': 'application/json',
+          },
+        ),
+        onSendProgress: onProgress,
       );
-      if (response.data['success'] == true) {
-        final List videoList = response.data['data']['videos'];
-        return videoList.map((v) => VideoModel.fromJson(v)).toList();
-      } else {
-        throw ServerException(response.data['message'] ?? 'Upload failed');
-      }
+      return VideoResponse.fromJson(response.data as Map<String, dynamic>);
     } on DioException catch (e) {
       throw ServerException(e.response?.data['message'] ?? 'Server Error');
     }
@@ -91,16 +104,36 @@ class VideoRemoteDataSourceImpl implements VideoRemoteDataSource {
   }
 
   @override
-  Future<String> uploadThumbnail(String id, File thumbnail) async {
+  Future<String> uploadThumbnail(String id, FileUploadModel thumbnail) async {
     try {
+      final MultipartFile file;
+      final mediaType =
+          MediaType('image', thumbnail.format.replaceAll('.', ''));
+
+      if (thumbnail.bytes != null) {
+        file = MultipartFile.fromBytes(
+          thumbnail.bytes!,
+          filename: thumbnail.name,
+          contentType: mediaType,
+        );
+      } else {
+        file = await MultipartFile.fromFile(
+          thumbnail.path!,
+          filename: thumbnail.name,
+          contentType: mediaType,
+        );
+      }
+
       final formData = FormData.fromMap({
-        'thumbnail':
-            await MultipartFile.fromFile(thumbnail.path, filename: 'thumb.jpg'),
+        'thumbnail': file,
       });
 
       final response = await dio.post(
         ApiConstants.videoThumbnail(id),
         data: formData,
+        options: Options(
+          contentType: 'multipart/form-data',
+        ),
       );
       if (response.data['success'] == true) {
         return response.data['data']['thumbnailUrl'];

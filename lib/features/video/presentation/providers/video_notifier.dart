@@ -1,27 +1,36 @@
-import 'dart:io';
+import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:finflow_app/core/common/errors/failures.dart';
+import 'package:rxdart/rxdart.dart';
+import 'package:finflow_app/core/common/models/file_upload_model.dart';
 import 'package:finflow_app/features/video/domain/entities/video_entity.dart';
-import 'package:finflow_app/features/video/domain/usecases/delete_video_usecase.dart';
 import 'package:finflow_app/features/video/domain/usecases/get_videos_usecase.dart';
 import 'package:finflow_app/features/video/domain/usecases/upload_videos_usecase.dart';
+import 'package:finflow_app/features/video/domain/usecases/delete_video_usecase.dart';
 import 'package:finflow_app/features/video/presentation/providers/video_state.dart';
 
-/// StateNotifier managing video list state with pagination support.
 class VideoNotifier extends StateNotifier<VideoState> {
   final GetVideosUseCase getVideosUseCase;
   final UploadVideosUseCase uploadVideosUseCase;
   final DeleteVideoUseCase deleteVideoUseCase;
 
+  final _videosSubject = BehaviorSubject<List<VideoEntity>>.seeded([]);
   int _currentPage = 1;
 
   VideoNotifier({
     required this.getVideosUseCase,
     required this.uploadVideosUseCase,
     required this.deleteVideoUseCase,
-  }) : super(VideoInitial());
+  }) : super(VideoInitial()) {
+    _videosSubject.listen((videos) {
+      if (state is VideoLoaded) {
+        state = VideoLoaded(
+            videos: videos, hasMore: (state as VideoLoaded).hasMore);
+      }
+    });
+  }
 
-  /// Fetches videos with optional refresh (resets pagination).
+  Stream<List<VideoEntity>> get videosStream => _videosSubject.stream;
+
   Future<void> fetchVideos({bool refresh = false}) async {
     if (refresh) {
       _currentPage = 1;
@@ -32,19 +41,19 @@ class VideoNotifier extends StateNotifier<VideoState> {
         await getVideosUseCase(GetVideosParams(page: _currentPage, limit: 10));
 
     result.fold(
-      (Failure failure) {
-        state = VideoError(failure.message);
-      },
-      (List<VideoEntity> videos) {
+      (failure) => state = VideoError(failure.message),
+      (newVideos) {
         if (refresh) {
-          state = VideoLoaded(videos: videos, hasMore: videos.length >= 10);
+          _videosSubject.add(newVideos);
+          state =
+              VideoLoaded(videos: newVideos, hasMore: newVideos.length >= 10);
         } else {
-          final currentVideos = state is VideoLoaded
-              ? (state as VideoLoaded).videos
-              : <VideoEntity>[];
+          final currentVideos = _videosSubject.value;
+          final updatedVideos = [...currentVideos, ...newVideos];
+          _videosSubject.add(updatedVideos);
           state = VideoLoaded(
-            videos: [...currentVideos, ...videos],
-            hasMore: videos.length >= 10,
+            videos: updatedVideos,
+            hasMore: newVideos.length >= 10,
           );
         }
         _currentPage++;
@@ -52,31 +61,44 @@ class VideoNotifier extends StateNotifier<VideoState> {
     );
   }
 
-  /// Uploads video files and refreshes the list on success.
-  Future<void> uploadVideos(List<File> files) async {
+  Future<void> uploadVideos(List<FileUploadModel> files) async {
     state = VideoUploading();
-    final result = await uploadVideosUseCase(files);
-    result.fold(
-      (Failure failure) {
-        state = VideoError(failure.message);
+    final result = await uploadVideosUseCase(UploadVideosParams(
+      files: files,
+      onProgress: (sent, total) {
+        if (total > 0) {
+          final progress = sent / total;
+          state = VideoUploadProgress(
+            progress: progress.clamp(0.0, 1.0),
+            statusText: 'Uploading ${(progress * 100).toStringAsFixed(0)}%',
+          );
+        }
       },
-      (List<VideoEntity> videos) {
-        state = VideoUploadSuccess(videos);
+    ));
+    result.fold(
+      (failure) => state = VideoError(failure.message),
+      (uploadedVideos) {
+        state = VideoUploadSuccess(uploadedVideos);
         fetchVideos(refresh: true);
       },
     );
   }
 
-  /// Deletes a video by ID and refreshes the list on success.
   Future<void> deleteVideo(String id) async {
     final result = await deleteVideoUseCase(id);
     result.fold(
-      (Failure failure) {
-        state = VideoError(failure.message);
-      },
+      (failure) => state = VideoError(failure.message),
       (_) {
-        fetchVideos(refresh: true);
+        final updatedVideos =
+            _videosSubject.value.where((v) => v.id != id).toList();
+        _videosSubject.add(updatedVideos);
       },
     );
+  }
+
+  @override
+  void dispose() {
+    _videosSubject.close();
+    super.dispose();
   }
 }

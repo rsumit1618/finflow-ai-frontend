@@ -4,6 +4,7 @@ class VideoEntity extends Equatable {
   final String id;
   final String fileName;
   final int fileSize;
+  final String? mimeType;
   final String format;
   final String url;
   final String? thumbnailUrl;
@@ -13,6 +14,7 @@ class VideoEntity extends Equatable {
     required this.id,
     required this.fileName,
     required this.fileSize,
+    this.mimeType,
     required this.format,
     required this.url,
     this.thumbnailUrl,
@@ -20,5 +22,5 @@ class VideoEntity extends Equatable {
   });
 
   @override
-  List<Object?> get props => [id, fileName, fileSize, format, url, thumbnailUrl, createdAt];
+  List<Object?> get props => [id, fileName, fileSize, mimeType, format, url, thumbnailUrl, createdAt];
 }

@@ -1,5 +1,5 @@
 import 'package:dio/dio.dart';
-import 'package:finflow_app/core/common/constants/api_constants.dart';
+import 'package:finflow_app/core/common/network/constants/api_constants.dart';
 import 'package:finflow_app/features/auth/data/datasources/auth_local_datasource.dart';
 
 class AuthInterceptor extends Interceptor {

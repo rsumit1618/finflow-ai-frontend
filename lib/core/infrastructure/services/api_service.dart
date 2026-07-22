@@ -1,6 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
-import 'package:finflow_app/core/common/constants/api_constants.dart';
+import 'package:finflow_app/core/common/network/constants/api_constants.dart';
 import 'package:finflow_app/core/infrastructure/storage/secure_storage.dart';
 import 'package:finflow_app/features/auth/data/datasources/auth_local_datasource.dart';
 import 'package:finflow_app/features/auth/data/models/auth_response_model.dart';

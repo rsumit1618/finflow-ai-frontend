@@ -16,6 +16,17 @@ abstract class AuthRepository {
 
   Future<Either<Failure, UserEntity>> getProfile();
 
+  Future<Either<Failure, UserEntity>> updateProfile({
+    required String firstName,
+    required String lastName,
+    required int age,
+    required String college,
+    required int qualificationYear,
+    required String address,
+    required String highestQualification,
+    String? profileImage,
+  });
+
   Future<Either<Failure, void>> logout();
 
   Future<Either<Failure, bool>> isLoggedIn();

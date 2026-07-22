@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:finflow_app/core/common/routing/app_router.dart';
+import 'package:finflow_app/core/common/errors/failures.dart';
+import 'package:finflow_app/core/common/ui/utils/error_handler_ui.dart';
+import 'package:finflow_app/core/common/utils/routing/app_router.dart';
 import 'package:finflow_app/core/common/utils/validators.dart';
-import 'package:finflow_app/core/common/widgets/custom_button.dart';
-import 'package:finflow_app/core/common/widgets/custom_text_field.dart';
+import 'package:finflow_app/core/common/ui/widgets/custom_button.dart';
+import 'package:finflow_app/core/common/ui/widgets/custom_text_field.dart';
 import 'package:finflow_app/features/auth/presentation/providers/auth_providers.dart';
 import 'package:finflow_app/features/auth/presentation/providers/auth_state.dart';
 
@@ -41,9 +43,31 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
     ref.listen<AuthState>(authNotifierProvider, (previous, next) {
       if (next is AuthError) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(next.message), backgroundColor: Colors.red),
-        );
+        ErrorType errorType;
+        switch (next.type) {
+          case FailureType.network:
+            errorType = ErrorType.network;
+            break;
+          case FailureType.server:
+            errorType = ErrorType.server;
+            break;
+          case FailureType.validation:
+            errorType = ErrorType.validation;
+            break;
+          default:
+            errorType = ErrorType.unknown;
+        }
+        ErrorHandlerUI.showError(context, next.message, type: errorType);
+      } else if (next is AuthAuthenticated) {
+        // Log to confirm navigation trigger
+        debugPrint('AuthAuthenticated: profileComplete = ${next.user.isProfileComplete}');
+
+        // Smart navigation based on profile completeness
+        if (next.user.isProfileComplete) {
+          Navigator.pushNamedAndRemoveUntil(context, AppRoutes.dashboard, (route) => false);
+        } else {
+          Navigator.pushNamedAndRemoveUntil(context, AppRoutes.updateProfile, (route) => false);
+        }
       }
     });
 
@@ -59,8 +83,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  const Icon(Icons.account_balance_wallet,
-                      size: 80, color: Colors.blue),
+                  const Icon(Icons.account_balance_wallet, size: 80, color: Colors.blue),
                   const SizedBox(height: 24),
                   const Text(
                     'FinFlow AI',
@@ -101,8 +124,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     children: [
                       const Text('Don\'t have an account?'),
                       TextButton(
-                        onPressed: () =>
-                            Navigator.pushNamed(context, AppRoutes.register),
+                        onPressed: () => Navigator.pushNamed(context, AppRoutes.register),
                         child: const Text('Register'),
                       ),
                     ],

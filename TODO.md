@@ -1,44 +1,29 @@
-# FinFlow AI Refactoring TODO
+# Video Upload Fix - Task List
 
-## Phase 1: Fix Imports & Compilation ✅
-- [x] Create TODO.md
-- [x] Fix imports in `api_constants.dart` (unify with app_constants)
-- [x] Fix imports in `app_router.dart`
-- [x] Fix imports in `auth_interceptor.dart`
-- [x] Fix imports in `auth_providers.dart`
-- [x] Fix imports in `auth_notifier.dart`
-- [x] Fix imports in `video_notifier.dart`
-- [x] Fix imports in `video_providers.dart`
-- [x] Fix imports in `login_screen.dart`
-- [x] Fix imports in `register_screen.dart`
-- [x] Fix imports in `video_list_screen.dart`
-- [x] Fix imports in `video_card.dart`
-- [x] Fix imports in `api_service.dart` (deprecated + imports)
-- [x] Fix imports in `injection_container.dart`
-- [x] Fix imports in `auth_remote_datasource.dart`
-- [x] Fix imports in `video_remote_datasource.dart`
-- [x] Fix imports in `auth_repository_impl.dart`
-- [x] Fix imports in `video_repository_impl.dart`
-- [x] Fix imports in `auth_state.dart`, `video_state.dart`
-- [x] Fix imports in `usecase.dart`
-- [x] Fix imports in `api_client.dart`
-- [x] Fix imports in `auth_local_datasource.dart`
-- [x] Fix imports in `user_model.dart`, `video_model.dart`
-- [x] Fix imports in `video_repository.dart` (domain)
-- [x] Fix `VideoLoading` state bug in video_list_screen.dart
+## ✅ Phase 1: Upload Progress Tracking
+- [ ] `video_remote_datasource.dart` - Add `onProgress` callback to `uploadVideos`
+- [ ] `video_repository.dart` - Add `onProgress` to repository interface
+- [ ] `video_repository_impl.dart` - Pass progress callback through
+- [ ] `upload_videos_usecase.dart` - Add progress callback
+- [ ] `video_state.dart` - Add `VideoUploadProgress` state
+- [ ] `video_notifier.dart` - Track upload progress
+- [ ] `video_list_screen.dart` - Show progress bar in UI
 
-## Phase 2: Unify & Clean Architecture ✅
-- [x] Merge API constants into single source of truth (api_constants.dart)
-- [x] Mark api_service.dart as @Deprecated
-- [x] Added documentation comments to key classes
+## ✅ Phase 2: Fix Null Safety & Edge Cases
+- [ ] `video_response.dart` - Add null-safe `createdAt` fallback
+- [ ] `video_model.dart` - Add null-safe `createdAt` fallback
 
-## Phase 3: Run & Test ✅
-- [x] Run flutter pub get - ✅ Dependencies resolved
-- [x] Run flutter analyze - ✅ No errors! (only 4 info/warnings remain)
+## ✅ Phase 3: Video Playback
+- [ ] Add video playback on card tap (open URL externally)
+- [ ] Install `url_launcher` if not available
 
-## Remaining Non-blocking Items (info/warnings only):
-- `analysis_options.yaml` - need to fix lints package
-- `theme_provider.dart` - deprecated `background`/`surfaceVariant` 
-- `platform_view_web.dart` - deprecated `dart:html`
-- Need a running backend server at `http://localhost:3000/api/v1`
+## ✅ Phase 4: Backend Fixes
+- [ ] Verify CORS config allows upload origins
+- [ ] Add proper error types for Prisma/S3 errors
+- [ ] Ensure Express 5 compatibility
+
+## ✅ Phase 5: Testing
+- [ ] Run backend `npm run dev`
+- [ ] Ensure frontend builds without errors
+- [ ] Test full upload flow end-to-end
 

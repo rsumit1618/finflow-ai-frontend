@@ -6,6 +6,7 @@ import 'package:finflow_app/features/auth/presentation/screens/profile_screen.da
 import 'package:finflow_app/features/auth/presentation/screens/update_profile_screen.dart';
 
 import 'package:finflow_app/features/auth/presentation/screens/settings_screen.dart';
+import 'package:finflow_app/features/blank/presentation/screens/blank_screen.dart';
 
 class AppRoutes {
   static const String initial = '/';
@@ -15,6 +16,7 @@ class AppRoutes {
   static const String profile = '/profile';
   static const String updateProfile = '/update-profile';
   static const String settings = '/settings';
+  static const String blank = '/blank';
 }
 
 class AppRouter {
@@ -32,6 +34,8 @@ class AppRouter {
         return MaterialPageRoute(builder: (_) => const UpdateProfileScreen());
       case AppRoutes.settings:
         return MaterialPageRoute(builder: (_) => const SettingsScreen());
+      case AppRoutes.blank:
+        return MaterialPageRoute(builder: (_) => const BlankScreen());
       default:
         return MaterialPageRoute(
           builder: (_) => Scaffold(

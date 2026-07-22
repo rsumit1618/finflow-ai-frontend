@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:finflow_app/core/common/errors/failures.dart';
 import 'package:finflow_app/core/common/ui/utils/error_handler_ui.dart';
+import 'package:finflow_app/core/common/utils/localization/app_localizations.dart';
 import 'package:finflow_app/core/common/utils/routing/app_router.dart';
 import 'package:finflow_app/core/common/utils/validators.dart';
 import 'package:finflow_app/core/common/ui/widgets/custom_button.dart';
@@ -40,6 +41,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     final authState = ref.watch(authNotifierProvider);
+    final l10n = AppLocalizations.of(context);
 
     ref.listen<AuthState>(authNotifierProvider, (previous, next) {
       if (next is AuthError) {
@@ -117,6 +119,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     text: 'Login',
                     onPressed: _submit,
                     isLoading: authState is AuthLoading,
+                  ),
+                  const SizedBox(height: 8),
+                  TextButton(
+                    onPressed: () => Navigator.pushNamed(context, AppRoutes.blank),
+                    child: Text(l10n?.translate('navigate_to_blank') ?? 'Go to Blank Page'),
                   ),
                   const SizedBox(height: 16),
                   Row(

@@ -25,6 +25,7 @@ class VideoModel with _$VideoModel {
         id: id,
         fileName: fileName,
         fileSize: fileSize,
+        mimeType: null, // mimeType not available in VideoModel
         format: format,
         url: url,
         thumbnailUrl: thumbnailUrl,

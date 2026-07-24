@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:finflow_app/core/common/utils/routing/app_router.dart';
+import 'package:finflow_app/core/common/ui/theme/finflow_theme.dart';
 import 'package:finflow_app/features/auth/presentation/providers/auth_providers.dart';
 import 'package:finflow_app/features/auth/presentation/providers/auth_state.dart';
 import 'package:finflow_app/features/auth/presentation/screens/login_screen.dart';
-import 'package:finflow_app/features/video/presentation/screens/video_list_screen.dart';
+import 'package:finflow_app/features/dashboard/presentation/screens/dashboard_screen.dart';
 
 void main() {
   runApp(
@@ -24,17 +25,9 @@ class MyApp extends ConsumerWidget {
     return MaterialApp(
       title: 'FinFlow AI',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
-        useMaterial3: true,
-        inputDecorationTheme: InputDecorationTheme(
-          filled: true,
-          fillColor: Colors.grey.shade50,
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-        ),
-      ),
+      theme: FinFlowTheme.lightTheme,
+      darkTheme: FinFlowTheme.darkTheme,
+      themeMode: ThemeMode.light,
       onGenerateRoute: AppRouter.generateRoute,
       home: _getHome(authState),
     );
@@ -45,7 +38,7 @@ class MyApp extends ConsumerWidget {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
     if (state is AuthAuthenticated) {
-      return const VideoListScreen();
+      return const DashboardScreen();
     }
     return const LoginScreen();
   }
